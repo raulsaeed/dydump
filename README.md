@@ -8,9 +8,7 @@ dydump is an iOS tweak that integrates with the ClassDumpRuntime library to prov
 
 ### Demo
 
-<video src="https://github.com/user-attachments/assets/RPReplay_Final1757422959.mov" controls width="600">
-  <p>Your browser doesn't support HTML video. <a href="https://github.com/user-attachments/assets/RPReplay_Final1757422959.mov">Download the video</a> instead.</p>
-</video>
+https://github.com/user-attachments/assets/RPReplay_Final1757422959.mov
 
 ### Features
 
