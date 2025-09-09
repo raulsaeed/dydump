@@ -8,7 +8,7 @@ dydump is an iOS tweak that integrates with the ClassDumpRuntime library to prov
 
 ### Demo
 
-![demo](https://github.com/raulsaeed/dydump/blob/5345562b17d5bcd8bfb60edfc0255a8870773814/screenshots/dydump_demo.gif)
+![demo](https://github.com/raulsaeed/dydump/blob/5b8e81df83f922cf6c31763f39738771e558b730/screenshots/dydump_demo.gif)
 
 ### Features
 
