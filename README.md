@@ -6,6 +6,10 @@ A MobileSubstrate tweak for iOS that provides runtime class dumping capabilities
 
 dydump is an iOS tweak that integrates with the ClassDumpRuntime library to provide runtime class inspection and dumping functionality. The tweak presents a UI overlay that allows users to analyze and dump Objective-C classes from running applications.
 
+### Demo
+
+https://github.com/user-attachments/assets/RPReplay_Final1757422959.mov
+
 ### Features
 
 - Runtime class dumping using ClassDumpRuntime library
