@@ -2,7 +2,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface DYDumpHeaderDumperUI : UIViewController
+@interface DYDumpHeaderDumperUI : UIViewController <UIDocumentInteractionControllerDelegate>
 
 + (void)presentFromViewController:(UIViewController *)parentViewController;
 

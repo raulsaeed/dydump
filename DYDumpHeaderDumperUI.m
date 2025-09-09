@@ -4,6 +4,7 @@
 #import "DYDumpHeaderDumper.h"
 #import "IOSLogger.h"
 #import "ClassDumpRuntime/ClassDump/Services/CDUtilities.h"
+#import <objc/runtime.h>
 
 @interface DYDumpHeaderDumperUI ()
 
@@ -674,10 +675,7 @@
                 if (cancelled) {
                     [self handleCancelledDump:dumped];
                 } else {
-                    NSString *directoryName = [self.currentDumpDirectoryPath lastPathComponent];
-                    [self showAlert:@"Dump Complete" 
-                            message:[NSString stringWithFormat:@"Successfully dumped %ld headers to Files app in Documents/%@/\nSkipped: %ld, Errors: %ld", 
-                                    (long)dumped, directoryName, (long)skipped, (long)errors]];
+                    [self showDumpCompleteAlertWithDumped:dumped skipped:skipped errors:errors directoryPath:self.currentDumpDirectoryPath];
                 }
             });
         }];
@@ -720,7 +718,9 @@
     
     UIAlertAction *keepAction = [UIAlertAction actionWithTitle:@"Keep Files" 
                                                          style:UIAlertActionStyleDefault 
-                                                       handler:nil];
+                                                       handler:^(UIAlertAction * _Nonnull action) {
+        [self showCancelledDumpKeptAlert:dumpedCount];
+    }];
     
     UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:@"Delete Files" 
                                                            style:UIAlertActionStyleDestructive 
@@ -735,6 +735,31 @@
     [self presentViewController:alert animated:YES completion:nil];
 }
 
+- (void)showCancelledDumpKeptAlert:(NSInteger)dumpedCount {
+    NSString *directoryName = [self.currentDumpDirectoryPath lastPathComponent];
+    NSString *message = [NSString stringWithFormat:@"Kept %ld partially dumped headers.\n\nHeaders saved to: Documents/%@/", 
+                        (long)dumpedCount, directoryName];
+    
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Files Kept" 
+                                                                   message:message 
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    
+    // Share/Save button
+    UIAlertAction *shareAction = [UIAlertAction actionWithTitle:@"Save to Files" 
+                                                         style:UIAlertActionStyleDefault 
+                                                       handler:^(UIAlertAction * _Nonnull action) {
+        [self openFilesAppWithPath:self.currentDumpDirectoryPath];
+    }];
+    
+    // OK button
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK" 
+                                                      style:UIAlertActionStyleCancel 
+                                                    handler:nil];
+    
+    [alert addAction:shareAction];
+    [alert addAction:okAction];
+    [self presentViewController:alert animated:YES completion:nil];
+}
 
 - (void)showDeletionProgress {
     // Show progress UI while deleting
@@ -832,6 +857,119 @@
     UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil];
     [alert addAction:okAction];
     [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)showDumpCompleteAlertWithDumped:(NSInteger)dumped skipped:(NSInteger)skipped errors:(NSInteger)errors directoryPath:(NSString *)directoryPath {
+    NSString *directoryName = [directoryPath lastPathComponent];
+    NSString *message = [NSString stringWithFormat:@"Successfully dumped %ld headers!\nSkipped: %ld, Errors: %ld\n\nHeaders saved to: Documents/%@/", 
+                        (long)dumped, (long)skipped, (long)errors, directoryName];
+    
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Dump Complete" 
+                                                                   message:message 
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    
+    // Share/Save button
+    UIAlertAction *shareAction = [UIAlertAction actionWithTitle:@"Save to Files" 
+                                                         style:UIAlertActionStyleDefault 
+                                                       handler:^(UIAlertAction * _Nonnull action) {
+        [self openFilesAppWithPath:directoryPath];
+    }];
+    
+    // OK button
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"OK" 
+                                                      style:UIAlertActionStyleCancel 
+                                                    handler:nil];
+    
+    [alert addAction:shareAction];
+    [alert addAction:okAction];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)openFilesAppWithPath:(NSString *)directoryPath {
+    // Share the directory directly using UIActivityViewController
+    [self presentDocumentInteractionControllerForPath:directoryPath];
+}
+
+- (void)presentDocumentInteractionControllerForPath:(NSString *)filePath {
+    NSURL *fileURL = [NSURL fileURLWithPath:filePath];
+    
+    if (@available(iOS 11.0, *)) {
+        // Use UIActivityViewController for iOS 11+
+        UIActivityViewController *activityVC = [[UIActivityViewController alloc] 
+                                               initWithActivityItems:@[fileURL] 
+                                               applicationActivities:nil];
+        
+        // Configure for iPad
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+            activityVC.popoverPresentationController.sourceView = self.view;
+            activityVC.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, 
+                                                                           self.view.bounds.size.height/2, 
+                                                                           1, 1);
+        }
+        
+        // Customize activities and handle cleanup
+        activityVC.completionWithItemsHandler = ^(UIActivityType activityType, BOOL completed, NSArray *returnedItems, NSError *activityError) {
+            if (completed) {
+                NSLog(@"Successfully shared headers");
+                // Clean up the original directory after successful share
+                [self cleanupDirectoryAfterShare:filePath];
+            } else if (activityError) {
+                NSLog(@"Error sharing headers: %@", activityError.localizedDescription);
+            }
+        };
+        
+        [self presentViewController:activityVC animated:YES completion:nil];
+    } else {
+        // Fallback for older iOS versions
+        UIDocumentInteractionController *documentController = [UIDocumentInteractionController interactionControllerWithURL:fileURL];
+        documentController.delegate = self;
+        
+        // Store the file path for cleanup later
+        objc_setAssociatedObject(documentController, "filePath", filePath, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+        
+        if (![documentController presentOptionsMenuFromRect:CGRectMake(self.view.bounds.size.width/2, 
+                                                                      self.view.bounds.size.height/2, 
+                                                                      1, 1) 
+                                                    inView:self.view 
+                                                  animated:YES]) {
+            [self showAlert:@"Unable to Share" 
+                    message:@"Could not open sharing options. Headers are saved in the app's Documents directory."];
+        }
+    }
+}
+
+- (void)cleanupDirectoryAfterShare:(NSString *)directoryPath {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        NSError *error = nil;
+        
+        if ([fileManager fileExistsAtPath:directoryPath]) {
+            BOOL success = [fileManager removeItemAtPath:directoryPath error:&error];
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (success) {
+                    NSLog(@"Successfully cleaned up directory: %@", [directoryPath lastPathComponent]);
+                } else {
+                    NSLog(@"Failed to cleanup directory: %@", error.localizedDescription);
+                }
+            });
+        }
+    });
+}
+
+#pragma mark - UIDocumentInteractionControllerDelegate
+
+- (void)documentInteractionController:(UIDocumentInteractionController *)controller didEndSendingToApplication:(NSString *)application {
+    // User successfully shared/saved the file
+    NSString *filePath = objc_getAssociatedObject(controller, "filePath");
+    if (filePath) {
+        [self cleanupDirectoryAfterShare:filePath];
+    }
+}
+
+- (void)documentInteractionControllerDidDismissOptionsMenu:(UIDocumentInteractionController *)controller {
+    // Clean up associated object when done
+    objc_setAssociatedObject(controller, "filePath", nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 

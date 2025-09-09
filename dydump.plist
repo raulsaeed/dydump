@@ -1,1 +1,1 @@
-{ Filter = { Bundles = ( "com.zhiliaoapp.musically" ); }; }
+{ Filter = { Bundles = ( "com.apple.UIKit" ); }; }

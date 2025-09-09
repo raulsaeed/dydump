@@ -1,178 +1,78 @@
-# DYDump - ClassDumpRuntime UI Wrapper
+# dydump
 
-DYDump is a user-friendly iOS interface for [ClassDumpRuntime](https://github.com/leptos-null/ClassDumpRuntime), providing an intuitive way to dump Objective-C class headers from any iOS application.
+A MobileSubstrate tweak for iOS that provides runtime class dumping capabilities with a user interface overlay.
 
-## Features
+## Overview
 
-- **Pattern-Based Filtering**: Filter classes using wildcards (e.g., `UIKit*`, `*View*`)
-- **Customizable Options**: Configure header generation with multiple options
-- **Concurrent Processing**: High-performance multi-threaded dumping
+dydump is an iOS tweak that integrates with the ClassDumpRuntime library to provide runtime class inspection and dumping functionality. The tweak presents a UI overlay that allows users to analyze and dump Objective-C classes from running applications.
 
-## Screenshots
+### Features
 
-The tool provides a clean, scrollable interface with:
-- Pattern input field with keyboard toolbar
-- Live class count analysis
-- Configurable generation options
-- Progress tracking with cancel capability
+- Runtime class dumping using ClassDumpRuntime library
+- User-friendly UI overlay for easy access
+- Remote logging capabilities
+- Automatic injection into target applications
 
-## Generation Options
+## Dependencies
 
-### Available Options:
-- **Add Symbol Image Comments**: Include image path comments in headers
-- **Strip Synthesized Properties**: Remove auto-generated property implementations
-- **Strip Overrides**: Remove method overrides from superclasses
-- **Strip Protocol Conformance**: Remove protocol conformance declarations
-- **Strip Duplicates**: Remove duplicate method declarations
+- **ClassDumpRuntime**: A Swift library for runtime class dumping and reflection
+- **MobileSubstrate**: iOS tweak injection framework
+- **Theos**: Build system for iOS tweaks
 
-### Default Settings:
-- ✅ Strip Overrides (ON)
-- ✅ Strip Protocol Conformance (ON)
-- ✅ Strip Duplicates (ON)
-- ❌ Add Symbol Image Comments (OFF)
-- ❌ Strip Synthesized Properties (OFF)
-
-## Usage
-
-### Programmatic Usage
-
-```objc
-// Present the UI from any view controller
-[DYDumpHeaderDumperUI presentFromViewController:someViewController];
-
-// Direct dumping (all classes)
-[DYDumpHeaderDumper dumpAllClassHeaders];
-
-// Targeted dumping with options
-NSDictionary *options = @{
-    @"stripOverrides": @YES,
-    @"stripDuplicates": @YES,
-    // ... other options
-};
-[DYDumpHeaderDumper dumpClassHeaders:classArray withOptions:options];
-```
-
-### UI Workflow
-
-1. **Enter Pattern**: Type a class name pattern (optional)
-   - Examples: `UIKit*`, `*View*`, `NS*`, or leave empty for all classes
-2. **Analyze**: Tap "Analyze Classes" to see how many classes match
-3. **Configure**: Adjust generation options as needed
-4. **Dump**: Tap "Dump Headers" to start the process
-5. **Monitor**: Watch real-time progress with cancel option
-6. **Access**: Find headers in Files app under `Documents/headers/`
-
-## Installation & Compilation
+## Build Instructions
 
 ### Prerequisites
 
-- **Theos**: iOS development environment
-- **ClassDumpRuntime**: Core dumping library
-- **iOS Device**: Jailbroken device for testing
+1. Install Theos build system
+2. Set up your iOS development environment
+3. Ensure you have the required signing certificates
 
-### Build Instructions
+### Setup
 
-1. **Clone the repository**:
-```bash
-git clone <repository-url>
-cd dydump
-```
+1. Clone the ClassDumpRuntime repository:
+   ```bash
+   git clone https://github.com/leptos-null/ClassDumpRuntime.git
+   ```
 
-2. **Install dependencies**:
-   - Ensure ClassDumpRuntime is installed on your device
-   - Make sure IOSLogger is available in your project
+2. Build the project:
+   ```bash
+   make package
+   ```
 
-3. **Configure Makefile**:
-```makefile
-# Example Makefile configuration
-TARGET := iphone:clang:latest:12.0
-INSTALL_TARGET_PROCESSES = SpringBoard
+### Build Requirements
 
-include $(THEOS)/makefiles/common.mk
+- **Target**: iPhone with iOS 14.5+
+- **Architecture**: ARM64 (iphoneos-arm)
+- **Compiler**: Clang with ARC support
 
-TWEAK_NAME = DYDump
+## Configuration
 
-DYDump_FILES = Tweak.x DYDumpHeaderDumper.m DYDumpHeaderDumperUI.m
-DYDump_FRAMEWORKS = UIKit Foundation
-DYDump_PRIVATE_FRAMEWORKS = 
-DYDump_LIBRARIES = 
+The tweak is configured to:
+- Remote logging: 192.168.100.6:5021 (configurable in Tweak.x)
+- Device IP: 192.168.100.35 (configurable in Makefile)
 
-include $(THEOS_MAKE_PATH)/tweak.mk
-```
+## Installation
 
-4. **Build the project**:
-```bash
-make
-```
+1. Build the package using `make package`
+2. Install the generated `.deb` file on your jailbroken iOS device
+3. The tweak will automatically inject into the target application
 
-5. **Install on device**:
-```bash
-make package install
-```
+## Usage
 
-6. **Respring**:
-```bash
-killall -9 SpringBoard
-```
+Once installed, the tweak will:
+1. Automatically present a UI overlay when the target app launches
+2. Provide class dumping functionality through the interface
+3. Log activities to the configured remote logging server
 
 ## File Structure
 
-```
-dydump/
-├── DYDumpHeaderDumper.h          # Core dumper interface
-├── DYDumpHeaderDumper.m          # Core dumper implementation
-├── DYDumpHeaderDumperUI.h        # UI interface
-├── DYDumpHeaderDumperUI.m        # UI implementation
-├── IOSLogger.h                   # Logging utility
-├── Tweak.x                       # Tweak integration
-├── Makefile                      # Build configuration
-└── README.md                     # This file
-```
-
-## Technical Details
-
-### Performance Features
-- **Concurrent Processing**: Uses GCD for parallel class processing
-- **Thread-Safe Counters**: Atomic operations for progress tracking
-- **Memory Management**: Auto-release pools in worker threads
-- **Progress Batching**: Efficient UI updates without overwhelming main thread
-
-### Output Location
-Headers are saved to:
-```
-Documents/headers/ClassName.h
-```
-
-This location is accessible through:
-- Files app on iOS
-- iTunes file sharing
-- Third-party file managers
-
-### Safety Features
-- **Class Safety Check**: Validates classes before processing
-- **Error Handling**: Graceful handling of write errors
-- **Cancellation Support**: Clean cancellation with optional file cleanup
-- **State Management**: Proper UI state during all operations
-
-## Credits
-
-**DYDump** - ClassDumpRuntime UI Wrapper
-- **Raul** ([@raulsaeed](https://github.com/raulsaeed)) - UI Wrapper Developer
-- **leptos** ([@leptos-null](https://github.com/leptos-null)) - ClassDumpRuntime Developer
-
-ClassDumpRuntime is the core library that powers this tool.
+- `Tweak.x` - Main tweak implementation with MobileSubstrate hooks
+- `DYDumpHeaderDumper.*` - Core dumping functionality
+- `DYDumpHeaderDumperUI.*` - User interface components
+- `IOSLogger.*` - Remote logging implementation
+- `ClassDumpRuntime/` - Third-party class dumping library
+- `Makefile` - Build configuration
 
 ## License
 
-This project is provided as-is for educational and research purposes. Please respect the intellectual property of applications you analyze.
-
-## Support
-
-For issues, questions, or contributions:
-- Open an issue on GitHub
-- Check ClassDumpRuntime documentation for core functionality
-- Ensure your device has proper ClassDumpRuntime installation
-
----
-
-**Note**: This tool requires a jailbroken iOS device and is intended for legitimate security research and educational purposes.
+This project integrates with ClassDumpRuntime. Please refer to the respective licenses of the dependencies used.
