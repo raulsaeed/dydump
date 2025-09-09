@@ -30,7 +30,6 @@ void showDYDumpUI() {
     [[iOSLogger sharedInstance] startLoggingWithHost:@"192.168.100.6" port:5021];
     LogMessage(@"dydump loaded");
     
-    // Fallback: try to show UI after a delay if no hooks triggered
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         showDYDumpUI();
     });

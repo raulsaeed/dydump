@@ -2,7 +2,7 @@ Package: com.raulsaeed.dydump
 Name: dydump
 Version: 0.0.1
 Architecture: iphoneos-arm
-Description: An awesome MobileSubstrate tweak!
+Description: A Dynamic Class-Dump Tool | AKA ClassDumpRuntime UI Wrapper
 Maintainer: raul
 Author: raul
 Section: Tweaks

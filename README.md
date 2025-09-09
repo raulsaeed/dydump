@@ -54,8 +54,8 @@ The tweak is configured to:
 ## Installation
 
 1. Build the package using `make package`
-2. Install the generated `.deb` file on your jailbroken iOS device
-3. The tweak will automatically inject into the target application
+2. inject the generated `.deb` or `.dylib` using TrollFools or eSign or any other signer   
+3. The Tweak's UI will appear 5s after app lauch 
 
 ## Usage
 
