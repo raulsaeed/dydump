@@ -2,6 +2,5 @@
 packages/
 .DS_Store
 .cache/
-.theos/
 compile_commands.json
 .claude/
