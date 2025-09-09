@@ -2,5 +2,5 @@
 packages/
 .DS_Store
 .cache/
-compile_commands.json
 .claude/
+compile_commands.json
